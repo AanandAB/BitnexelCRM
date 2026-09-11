@@ -2,10 +2,10 @@ import { CaseStudy, PortalProject } from '../types';
 
 export const CASE_STUDIES: CaseStudy[] = [
   {
-    id: 'naturenav',
-    slug: 'naturenav-theyyam-guide',
-    title: 'NatureNav — Theyyam Field Guide & Calendar',
-    client: 'NatureNav',
+    id: 'theyyam-trails',
+    slug: 'theyyam-trails',
+    title: 'Theyyam Trails — Theyyam Field Guide & Calendar',
+    client: 'Theyyam Trails',
     category: 'Custom Software',
     shortDescription: "Offline-first Flutter field guide to Kerala's Theyyam tradition — 973 sacred venues mapped, cached locally, and synced from a Cloudflare D1 backend.",
     fullDescription: "A Flutter mobile field guide to Kerala's Theyyam calendar. It maps 973 sacred venues, caches the entire calendar on-device for patchy rural connectivity, and syncs fresh venue data from a Cloudflare Workers + D1 backend.",
@@ -23,7 +23,7 @@ export const CASE_STUDIES: CaseStudy[] = [
     ],
     timeline: 'Live · seasonally updated',
     techStack: ['Flutter', 'Dart', 'Cloudflare Workers', 'Cloudflare D1', 'SQLite'],
-    image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?auto=format&fit=crop&w=1200&q=80',
+    image: '/images/theyyam.jpeg',
     featured: true
   },
   {
