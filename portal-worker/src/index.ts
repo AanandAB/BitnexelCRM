@@ -33,10 +33,35 @@ const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days
 
 const ALLOWED_ORIGINS = ['https://bitnexel.in', 'https://www.bitnexel.in', 'http://localhost:4321'];
 
+const SECURITY_HEADERS: Record<string, string> = {
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'X-Frame-Options': 'DENY',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'",
+};
+
+// Simple in-memory rate limiter for auth endpoints (resets on cold start).
+// Pair with Cloudflare WAF rate rules for persistent, edge-level limits.
+const RATE_WINDOW_MS = 60_000;
+const RATE_LIMIT = 30;
+const rateBuckets = new Map<string, { count: number; resetAt: number }>();
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const bucket = rateBuckets.get(ip);
+  if (!bucket || bucket.resetAt <= now) {
+    rateBuckets.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    return false;
+  }
+  bucket.count += 1;
+  return bucket.count > RATE_LIMIT;
+}
+
 function json(data: unknown, status = 200, extraHeaders: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8', ...extraHeaders },
+    headers: { 'Content-Type': 'application/json; charset=utf-8', ...SECURITY_HEADERS, ...extraHeaders },
   });
 }
 
@@ -141,6 +166,9 @@ export default {
 
     // ── Login: build the Google consent URL + bind state/verifier ───────────
     if (path === '/api/auth/login' && request.method === 'GET') {
+      if (isRateLimited(request.headers.get('CF-Connecting-IP') || 'anonymous')) {
+        return json({ error: 'Too many requests. Please try again later.' }, 429, cors);
+      }
       const state = b64url(randomBytes(16));
       const verifier = b64url(randomBytes(32));
       const challenge = await sha256Base64url(verifier);
@@ -164,12 +192,16 @@ export default {
         headers: {
           Location: `${GOOGLE_AUTH_URL}?${params.toString()}`,
           'Set-Cookie': `${OAUTH_COOKIE}=${encodeURIComponent(oauthCookieValue)}; ${cookieAttributes(hostname, 600, '/api/auth')}`,
+          ...SECURITY_HEADERS,
         },
       });
     }
 
     // ── Callback: exchange code, create session, redirect home ──────────────
     if (path === '/api/auth/callback' && request.method === 'GET') {
+      if (isRateLimited(request.headers.get('CF-Connecting-IP') || 'anonymous')) {
+        return json({ error: 'Too many requests. Please try again later.' }, 429, cors);
+      }
       const error = url.searchParams.get('error');
       if (error) {
         return Response.redirect(`${env.SITE_ORIGIN}/login?error=${encodeURIComponent(error)}`, 302);
@@ -235,6 +267,7 @@ export default {
       const sessionToken = await createSession(env, email, user.name ?? email);
 
       const headers = new Headers();
+      for (const [k, v] of Object.entries(SECURITY_HEADERS)) headers.set(k, v);
       headers.set('Location', `${env.SITE_ORIGIN}/portal`);
       headers.append(
         'Set-Cookie',

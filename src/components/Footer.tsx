@@ -6,10 +6,9 @@ import { ChevronRight, Shield, ArrowUpRight, Sparkles } from 'lucide-react';
 
 interface FooterProps {
   onNavigate: (route: RouteType) => void;
-  onOpenLegal: (type: 'privacy' | 'terms' | 'seo') => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenLegal }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
   return (
     <footer id="main-footer" className="relative mt-24 border-t border-border bg-muted/50 text-muted-foreground pt-16 pb-12 font-sans text-[12px]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -55,7 +54,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenLegal }) => {
                 100% Repository IP Transfer
               </span>
               <span className="px-2.5 py-1 rounded-full bg-surface border border-border text-foreground-soft">
-                60-Day Post-Launch Warranty
+                30-Day Post-Launch Warranty
               </span>
               <span className="px-2.5 py-1 rounded-full bg-[#0071e3]/10 border border-[#0071e3]/20 text-[#2997ff]">
                 Zero Generic Templates
@@ -154,7 +153,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenLegal }) => {
             </ul>
           </div>
 
-          {/* Col 3: Portal & Telemetry */}
+          {/* Col 3: Portal & Legal */}
           <div className="space-y-3">
             <div className="text-[11px] font-mono uppercase tracking-wider text-foreground font-medium">
               Client Portal
@@ -171,27 +170,45 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenLegal }) => {
               </li>
               <li>
                 <button 
-                  onClick={() => onOpenLegal('privacy')}
+                  onClick={() => onNavigate('legal-privacy')}
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Security & SOC2 Compliance
+                  Privacy Policy
+                </button>
+              </li>
+              <li>
+                <button 
+                  onClick={() => onNavigate('legal-terms')}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Terms of Service
                 </button>
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom copyright line */}
+        {/* Bottom legal line */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono text-muted-foreground">
           <div>
-            Copyright © {new Date().getFullYear()} Bitnexel Systems Inc. All rights reserved.
+            Copyright © {new Date().getFullYear()} Bitnexel Systems. All rights reserved.
           </div>
-          <div className="flex items-center gap-4 sm:gap-6 text-muted-foreground">
-            <span>SUB-40MS P99</span>
+          <div className="flex items-center gap-4 sm:gap-5 text-muted-foreground">
+            <button
+              onClick={() => onNavigate('legal-privacy')}
+              className="hover:text-foreground transition-colors"
+            >
+              Privacy Policy
+            </button>
             <span className="text-foreground/20">/</span>
-            <span>100% REPOSITORY IP</span>
+            <button
+              onClick={() => onNavigate('legal-terms')}
+              className="hover:text-foreground transition-colors"
+            >
+              Terms of Service
+            </button>
             <span className="text-foreground/20">/</span>
-            <span>AES-256 GCM</span>
+            <span>Made in India</span>
           </div>
         </div>
       </div>

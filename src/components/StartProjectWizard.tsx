@@ -1537,17 +1537,25 @@ export const StartProjectWizard: React.FC<StartProjectWizardProps> = ({
 
                   <div>
                     <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                      Portal Password (or magic link login)
+                      Portal Access
                     </label>
-                    <input
-                      id="account-input-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={accountInfo.password}
-                      onChange={(e) => setAccountInfo(prev => ({ ...prev, password: e.target.value }))}
-                      className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-foreground focus:outline-none focus:border-[#00D4FF]"
-                    />
+                    <div className="text-xs text-muted-foreground px-4 py-3 rounded-xl bg-surface border border-border">
+                      Secure Google sign-in — no password needed.
+                    </div>
                   </div>
+                </div>
+
+                <div className="flex items-start gap-2.5 text-xs text-muted-foreground pt-4">
+                  <input
+                    id="intake-consent"
+                    type="checkbox"
+                    required
+                    className="mt-0.5 accent-[#FF6B4A]"
+                  />
+                  <label htmlFor="intake-consent">
+                    I consent to Bitnexel processing my personal data to respond to my enquiry and set up my portal, as described in the{' '}
+                    <a href="/privacy" target="_blank" rel="noreferrer" className="text-[#00D4FF] hover:underline">Privacy Policy</a>.
+                  </label>
                 </div>
 
                 <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">

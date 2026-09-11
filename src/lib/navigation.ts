@@ -26,6 +26,8 @@ const ROUTE_TO_PATH: Record<string, string> = {
   start: '/start',
   login: '/login',
   portal: '/portal',
+  'legal-privacy': '/privacy',
+  'legal-terms': '/terms',
 };
 
 export function useAppRouter() {
@@ -63,5 +65,7 @@ export function pathToRoute(pathname: string): RouteType {
   if (p === '/start') return 'start';
   if (p === '/login') return 'login';
   if (p === '/portal') return 'portal';
+  if (p === '/privacy') return 'legal-privacy';
+  if (p === '/terms') return 'legal-terms';
   return 'home';
 }

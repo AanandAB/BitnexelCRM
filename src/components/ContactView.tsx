@@ -429,6 +429,19 @@ export const ContactView: React.FC<ContactViewProps> = ({ onNavigate }) => {
                 />
               </div>
 
+              <div className="flex items-start gap-2.5 text-xs text-muted-foreground">
+                <input
+                  id="contact-consent"
+                  type="checkbox"
+                  required
+                  className="mt-0.5 accent-indigo-500"
+                />
+                <label htmlFor="contact-consent">
+                  I consent to Bitnexel processing my personal data to respond to my enquiry, as described in the{' '}
+                  <a href="/privacy" target="_blank" rel="noreferrer" className="text-accent-text hover:underline">Privacy Policy</a>.
+                </label>
+              </div>
+
               <button
                 type="submit"
                 className="btn-primary w-full py-3.5 text-sm font-semibold shadow-lg shadow-white/10"

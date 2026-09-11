@@ -3,9 +3,17 @@ import { AppShell } from '@/components/AppShell';
 import './globals.css';
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://bitnexel.in'),
   title: 'Bitnexel — High-Performance Software & Systems Studio',
   description:
     'We engineer high-throughput web applications, digital flagships, and bespoke software systems for businesses that demand sub-50ms performance.',
+  alternates: {
+    canonical: '/',
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 const THEME_SCRIPT =

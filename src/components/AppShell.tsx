@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { CurrencyProvider } from '@/context/CurrencyContext';
 import { PortalProvider } from '@/context/PortalContext';
@@ -8,17 +8,15 @@ import { MotionConfig } from 'motion/react';
 import { AmbientBackground } from '@/components/AmbientBackground';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
-import { LegalModal } from '@/components/LegalModals';
 import { useAppRouter, pathToRoute } from '@/lib/navigation';
 
 /**
  * The shared client shell that used to live inside App.tsx — providers,
- * ambient background, global nav/footer, and the legal modal. Every route
- * renders inside this, so nav + footer persist exactly as before.
+ * ambient background, global nav/footer. Every route renders inside this,
+ * so nav + footer persist exactly as before.
  */
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { navigate, pathname } = useAppRouter();
-  const [legalType, setLegalType] = useState<'terms' | 'privacy' | 'sitemap' | null>(null);
 
   return (
     <ThemeProvider>
@@ -36,13 +34,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
               <main className="flex-grow pt-24 pb-16 z-10">{children}</main>
 
               {/* Global Footer */}
-              <Footer
-                onNavigate={navigate}
-                onOpenLegal={(type) => setLegalType(type === 'seo' ? 'sitemap' : type)}
-              />
-
-              {/* Legal & Sitemap Modal */}
-              {legalType && <LegalModal type={legalType} onClose={() => setLegalType(null)} />}
+              <Footer onNavigate={navigate} />
             </div>
           </MotionConfig>
         </PortalProvider>
