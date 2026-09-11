@@ -2,8 +2,12 @@ node_modules/
 build/
 dist/
 coverage/
+.next/
+out/
 .freebuff/
 .DS_Store
 *.log
 .env*
 !.env.example
+AGENTS.md
+CLAUDE.md

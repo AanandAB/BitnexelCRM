@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { RouteType } from '../types';
 import { CheckCircle2, ArrowRight, Terminal, Sparkles, ChevronRight } from 'lucide-react';

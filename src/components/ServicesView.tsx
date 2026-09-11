@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { RouteType } from '../types';
 import { useCurrency } from '../context/CurrencyContext';
@@ -96,7 +98,7 @@ export const ServicesView: React.FC<ServicesViewProps> = ({ initialSubTab = 'all
           <SegmentedTabs
             tabs={DISCIPLINE_TABS}
             active={activeTab}
-            onChange={setActiveTab}
+            onChange={(id) => setActiveTab(id as DisciplineTab)}
             layoutId="services-discipline-tabs"
           />
         </div>

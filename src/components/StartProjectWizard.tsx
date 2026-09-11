@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { ServiceBranch, OnboardingState, PortalProject, RouteType } from '../types';
 import { useCurrency } from '../context/CurrencyContext';

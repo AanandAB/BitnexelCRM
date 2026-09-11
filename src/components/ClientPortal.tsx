@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { PortalProject, FeedbackItem, ChangeRequest, PendingClientItem, RouteType } from '../types';
 import { useCurrency } from '../context/CurrencyContext';

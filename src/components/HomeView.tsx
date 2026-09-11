@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { RouteType, CaseStudy } from '../types';
 import { CASE_STUDIES } from '../data/mockData';

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { CaseStudy } from '../types';
 import { mockCaseStudies } from '../data/mockData';
@@ -62,7 +64,7 @@ export const WorkView: React.FC<WorkViewProps> = ({ onSelectCaseStudy }) => {
           <SegmentedTabs
             tabs={tabs}
             active={activeFilter}
-            onChange={setActiveFilter}
+            onChange={(id) => setActiveFilter(id as FilterId)}
             layoutId="work-filter-tabs"
           />
         </div>

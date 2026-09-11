@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { X, ShieldCheck, FileText, CheckCircle2 } from 'lucide-react';
 

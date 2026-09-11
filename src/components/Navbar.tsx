@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { RouteType, CurrencyCode } from '../types';
 import { useCurrency } from '../context/CurrencyContext';

@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { RouteType } from '../types';
 import { ArrowLeft, Sparkles } from 'lucide-react';
