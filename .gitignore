@@ -9,5 +9,6 @@ out/
 *.log
 .env*
 !.env.example
+*.tsbuildinfo
 AGENTS.md
 CLAUDE.md

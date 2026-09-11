@@ -21,6 +21,7 @@ import {
   Calendar,
   DollarSign
 } from 'lucide-react';
+import { submitLead } from '../lib/leads';
 
 interface StartProjectWizardProps {
   initialBranch?: ServiceBranch | null;
@@ -232,6 +233,17 @@ export const StartProjectWizard: React.FC<StartProjectWizardProps> = ({
           monthlyHoursRemaining: 10
         }
       };
+
+      // Push the intake into the CRM lead pipeline (best-effort).
+      submitLead({
+        name: newProject.clientName,
+        email: newProject.clientEmail,
+        company: newProject.clientCompany,
+        service: newProject.category,
+        budget: String(newProject.payment.totalBudget),
+        message: `Project: ${newProject.name} | Goal: ${answers.mainGoal || 'n/a'} | Features: ${(answers.features || []).join(', ') || 'n/a'} | Timeline: ${answers.timeline || 'n/a'}`,
+        source: 'Intake Wizard',
+      });
 
       setIsSubmitting(false);
       onCompleteOnboarding(newProject);

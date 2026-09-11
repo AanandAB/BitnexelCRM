@@ -19,6 +19,7 @@ import {
   FileText,
   KeyRound
 } from 'lucide-react';
+import { submitLead } from '../lib/leads';
 
 interface ContactViewProps {
   onNavigate: (route: RouteType) => void;
@@ -91,6 +92,18 @@ export const ContactView: React.FC<ContactViewProps> = ({ onNavigate }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Push the brief into the CRM lead pipeline (best-effort; the on-page
+    // WhatsApp link remains the fallback if the worker is unreachable).
+    submitLead({
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone || undefined,
+      company: formData.company || undefined,
+      service: formData.service,
+      budget: formData.budget,
+      message: `${formData.service} | ${formData.message} (Role: ${formData.role || 'n/a'}; Company: ${formData.company || 'n/a'}; Size: ${formData.companySize}; Timeline: ${formData.timeline}; Heard via: ${formData.hearAbout})`,
+      source: 'Website Contact Form',
+    });
     setSubmitted(true);
   };
 
@@ -133,7 +146,7 @@ export const ContactView: React.FC<ContactViewProps> = ({ onNavigate }) => {
             <div className="space-y-3 pt-2">
               {/* WhatsApp direct */}
               <a
-                href="https://wa.me/15550192834?text=Hi%20Bitnexel,%20I'd%20like%20to%20discuss%20a%20new%20project"
+                href="https://wa.me/917034026295?text=Hi%20Bitnexel,%20I'd%20like%20to%20discuss%20a%20new%20project"
                 target="_blank"
                 rel="noreferrer"
                 className="p-4 rounded-xl bg-surface hover:bg-surface border border-border flex items-center justify-between text-xs transition-colors group"
