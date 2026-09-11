@@ -10,5 +10,6 @@ out/
 .env*
 !.env.example
 *.tsbuildinfo
+.wrangler/
 AGENTS.md
 CLAUDE.md
