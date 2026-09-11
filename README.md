@@ -1,21 +1,30 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Bitnexel — High-Performance Software & Systems Studio
 
-# Run and deploy your AI Studio app
+Static marketing site + client portal for the Bitnexel studio.
 
-This contains everything you need to run your app locally.
+## Stack
 
-View your app in AI Studio: https://ai.studio/apps/fa16d99f-1ede-4f47-868b-d822d0252613
+- **Next.js 16** (App Router, `output: 'export'` static export)
+- **Tailwind CSS v4**
+- **motion** (animations), **Three.js** (bookshelf), **lucide-react** (icons)
+- **bun** (package manager)
 
-## Run Locally
+## Local development
 
-**Prerequisites:**  Node.js
+```bash
+bun install
+bun run dev   # http://localhost:4321
+```
 
+## Build (static export)
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
-# BitnexelCRM
+```bash
+bun run build   # outputs to out/
+```
+
+## Deploy
+
+- Hosted on **Cloudflare Pages** (project `bitnexel`) → https://bitnexel.pages.dev
+- Every push to `main` auto-deploys via **GitHub Actions** (`.github/workflows/deploy.yml`).
+- Lead intake (`/contact` + `/start`) POSTs to the `bitnexel-leads` Cloudflare
+  Worker, which the **Lead to Close** desktop CRM polls every 30s.
