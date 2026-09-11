@@ -1,11 +1,24 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
 import type { PortalProject } from '@/types';
 import { mockClientProject } from '@/data/mockData';
+import {
+  getPortalSession,
+  startGoogleLogin,
+  logoutPortal,
+} from '@/lib/portal';
 
 interface PortalContextType {
   isLoggedIn: boolean;
+  loading: boolean;
+  email: string | null;
   activeProject: PortalProject;
   login: () => void;
   logout: () => void;
@@ -15,15 +28,37 @@ interface PortalContextType {
 const PortalContext = createContext<PortalContextType | undefined>(undefined);
 
 /**
- * Demo client-portal state (logged-in by default so the portal is testable
- * immediately). Replaces the `useState` block that used to live in App.tsx.
+ * Real client-portal auth state. On first load we ask the portal worker for an
+ * existing httpOnly session cookie; `login()` redirects to Google OAuth, and
+ * `logout()` revokes the session server-side.
  */
-export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
+export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState<string | null>(null);
   const [activeProject, setActiveProject] = useState<PortalProject>(mockClientProject);
 
-  const login = () => setIsLoggedIn(true);
-  const logout = () => setIsLoggedIn(false);
+  useEffect(() => {
+    getPortalSession().then((session) => {
+      setIsLoggedIn(session.loggedIn);
+      setEmail(session.email ?? null);
+      setLoading(false);
+    });
+  }, []);
+
+  const login = useCallback(() => {
+    startGoogleLogin();
+  }, []);
+
+  const logout = useCallback(() => {
+    logoutPortal().then(() => {
+      setIsLoggedIn(false);
+      setEmail(null);
+    });
+  }, []);
+
   const completeOnboarding = (project: PortalProject) => {
     setActiveProject(project);
     setIsLoggedIn(true);
@@ -31,7 +66,15 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   return (
     <PortalContext.Provider
-      value={{ isLoggedIn, activeProject, login, logout, completeOnboarding }}
+      value={{
+        isLoggedIn,
+        loading,
+        email,
+        activeProject,
+        login,
+        logout,
+        completeOnboarding,
+      }}
     >
       {children}
     </PortalContext.Provider>

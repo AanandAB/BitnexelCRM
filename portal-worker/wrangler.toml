@@ -1,0 +1,23 @@
+name = "bitnexel-portal"
+main = "src/index.ts"
+compatibility_date = "2026-08-01"
+
+# Serve the worker on api.bitnexel.in so its httpOnly session cookie is shared
+# with the main site (Domain=bitnexel.in). Wrangler creates the route + DNS.
+routes = [
+  { pattern = "api.bitnexel.in/*", zone_name = "bitnexel.in" }
+]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bitnexel-db"
+database_id = "76c12fa5-5962-4d35-a1b0-e181aa7acf9b"
+
+[vars]
+# Public OAuth client id (safe to be public; appears in the browser redirect).
+GOOGLE_CLIENT_ID = "873862246801-r7mne91k2o6picnbvtv0537ib5131ic1.apps.googleusercontent.com"
+# Where authenticated users are redirected after sign-in.
+SITE_ORIGIN = "https://bitnexel.in"
+
+# Secrets — set with `wrangler secret put` (NEVER commit these):
+#   GOOGLE_CLIENT_SECRET   – OAuth client secret

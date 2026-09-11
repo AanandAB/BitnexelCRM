@@ -6,7 +6,15 @@ import { usePortal } from '@/context/PortalContext';
 
 export default function PortalPage() {
   const { navigate } = useAppRouter();
-  const { isLoggedIn, activeProject, login, logout } = usePortal();
+  const { isLoggedIn, loading, activeProject, logout } = usePortal();
+
+  if (loading) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center text-sm text-muted-foreground">
+        Checking session…
+      </div>
+    );
+  }
 
   if (isLoggedIn) {
     return (
@@ -21,13 +29,5 @@ export default function PortalPage() {
     );
   }
 
-  return (
-    <LoginView
-      onLoginSuccess={() => {
-        login();
-        navigate('portal');
-      }}
-      onNavigate={navigate}
-    />
-  );
+  return <LoginView onNavigate={navigate} />;
 }
