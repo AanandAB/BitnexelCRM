@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: 'Privacy Policy — Bitnexel',
   description:
     'How Bitnexel Systems collects, uses, and protects your personal data in accordance with the DPDP Act 2023 and the Information Technology Act 2000.',
+  alternates: { canonical: '/privacy' },
 };
 
 export default function PrivacyPage() {

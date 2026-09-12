@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: 'Terms & Conditions — Bitnexel',
   description:
     'Terms and conditions for engaging Bitnexel Systems for software development, website, and cloud application services.',
+  alternates: { canonical: '/terms' },
 };
 
 export default function TermsPage() {
