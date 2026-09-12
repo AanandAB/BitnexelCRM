@@ -165,6 +165,9 @@ export interface PortalProject {
   };
   /** Real milestones synced from the CRM (for the 2-way approve flow). */
   milestones?: { id: string; name: string; status?: string; due_date?: string }[];
+  /** 11-step process position synced from the CRM. */
+  step?: number;
+  totalSteps?: number;
 }
 
 export interface OnboardingState {

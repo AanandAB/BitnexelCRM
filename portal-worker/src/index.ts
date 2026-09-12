@@ -311,7 +311,7 @@ export default {
       if (!session) return json({ error: 'Unauthorized' }, 401, cors);
 
       const projects = await env.DB.prepare(
-        'SELECT id, name, category, status, stage, summary, created_at FROM projects WHERE client_email = ? ORDER BY created_at DESC'
+        'SELECT id, name, category, status, stage, summary, step, total_steps, created_at FROM projects WHERE client_email = ? ORDER BY created_at DESC'
       )
         .bind(session.email)
         .all();
@@ -362,7 +362,7 @@ export default {
         const clientEmail = String(p?.client_email ?? '').trim().toLowerCase();
         if (!id || !clientEmail) continue;
         await env.DB.prepare(
-          'INSERT OR REPLACE INTO projects (id, client_email, name, category, status, stage, summary, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+          'INSERT OR REPLACE INTO projects (id, client_email, name, category, status, stage, summary, step, total_steps, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         ).bind(
           id,
           clientEmail,
@@ -371,6 +371,8 @@ export default {
           String(p?.status ?? ''),
           String(p?.stage ?? ''),
           String(p?.summary ?? ''),
+          Number(p?.step ?? 0),
+          Number(p?.total_steps ?? 11),
           String(p?.created_at ?? now)
         ).run();
         projects++;
@@ -398,9 +400,14 @@ export default {
       const text = String(body?.text ?? '').trim();
       if (!text) return json({ error: 'Message is required' }, 400, cors);
       const id = crypto.randomUUID();
+      const now = new Date().toISOString();
       await env.DB.prepare(
         'INSERT INTO portal_events (id, client_email, project_id, type, payload, created_at, synced) VALUES (?, ?, ?, ?, ?, ?, 0)'
-      ).bind(id, session.email, String(body?.project_id ?? ''), 'message', JSON.stringify({ text, sender: 'client' }), new Date().toISOString()).run();
+      ).bind(id, session.email, String(body?.project_id ?? ''), 'message', JSON.stringify({ text, sender: 'client' }), now).run();
+      // Also record it in the persistent message thread the client sees.
+      await env.DB.prepare(
+        'INSERT INTO portal_messages (id, project_id, client_email, sender, text, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+      ).bind(id, String(body?.project_id ?? ''), session.email, 'client', text, now).run();
       return json({ ok: true, id }, 200, cors);
     }
 
@@ -416,6 +423,39 @@ export default {
         'INSERT INTO portal_events (id, client_email, project_id, type, payload, created_at, synced) VALUES (?, ?, ?, ?, ?, ?, 0)'
       ).bind(id, session.email, String(body?.project_id ?? ''), 'milestone_approval', JSON.stringify({ milestone_id: milestoneId, milestone_name: String(body?.milestone_name ?? '') }), new Date().toISOString()).run();
       return json({ ok: true, id }, 200, cors);
+    }
+
+    // ── Studio reply (CRM → portal) + client message-thread read ────────────
+    if (path === '/api/portal/reply' && request.method === 'POST') {
+      const auth = request.headers.get('Authorization') || '';
+      if (auth !== `Bearer ${env.PORTAL_SYNC_TOKEN}`) return json({ error: 'Unauthorized' }, 401, cors);
+      let body: { project_id?: string; client_email?: string; text?: string };
+      try { body = await request.json(); } catch { return json({ error: 'Invalid JSON' }, 400, cors); }
+      const text = String(body?.text ?? '').trim();
+      const projectId = String(body?.project_id ?? '').trim();
+      const clientEmail = String(body?.client_email ?? '').trim().toLowerCase();
+      if (!text || !projectId || !clientEmail) {
+        return json({ error: 'project_id, client_email and text are required' }, 400, cors);
+      }
+      const id = crypto.randomUUID();
+      await env.DB.prepare(
+        'INSERT INTO portal_messages (id, project_id, client_email, sender, text, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+      ).bind(id, projectId, clientEmail, 'studio', text, new Date().toISOString()).run();
+      return json({ ok: true, id }, 200, cors);
+    }
+
+    if (path === '/api/portal/messages' && request.method === 'GET') {
+      const session = await getSession(env, getCookie(request, SESSION_COOKIE));
+      if (!session) return json({ error: 'Unauthorized' }, 401, cors);
+      const projectId = url.searchParams.get('project_id') ?? '';
+      const rows = projectId
+        ? await env.DB.prepare(
+            'SELECT id, project_id, sender, text, created_at FROM portal_messages WHERE client_email = ? AND project_id = ? ORDER BY created_at ASC'
+          ).bind(session.email, projectId).all()
+        : await env.DB.prepare(
+            'SELECT id, project_id, sender, text, created_at FROM portal_messages WHERE client_email = ? ORDER BY created_at ASC'
+          ).bind(session.email).all();
+      return json({ messages: rows.results }, 200, cors);
     }
 
     // CRM pulls unsynced client actions (token-authed, mirrors the lead worker).

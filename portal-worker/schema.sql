@@ -1,5 +1,4 @@
 -- Bitnexel client portal schema (D1).
--- Phase 3 ships the schema; Phase 4 syncs real client/project data from the CRM.
 
 CREATE TABLE IF NOT EXISTS clients (
   id TEXT PRIMARY KEY,
@@ -17,6 +16,8 @@ CREATE TABLE IF NOT EXISTS projects (
   status TEXT,
   stage TEXT,
   summary TEXT,
+  step INTEGER DEFAULT 0,
+  total_steps INTEGER DEFAULT 11,
   created_at TEXT NOT NULL
 );
 
@@ -36,5 +37,15 @@ CREATE TABLE IF NOT EXISTS sessions (
   expires_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS portal_messages (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  client_email TEXT NOT NULL,
+  sender TEXT NOT NULL,
+  text TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_projects_client ON projects(client_email);
 CREATE INDEX IF NOT EXISTS idx_milestones_project ON milestones(project_id);
+CREATE INDEX IF NOT EXISTS idx_portal_messages_project ON portal_messages(project_id, created_at);

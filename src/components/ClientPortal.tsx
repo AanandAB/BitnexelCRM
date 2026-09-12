@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PortalProject, FeedbackItem, ChangeRequest, PendingClientItem, RouteType } from '../types';
 import { useCurrency } from '../context/CurrencyContext';
 import { usePortal } from '../context/PortalContext';
@@ -36,7 +36,7 @@ interface ClientPortalProps {
 
 export const ClientPortal: React.FC<ClientPortalProps> = ({ project, onLogout, onNavigate }) => {
   const { formatAmount, currency } = useCurrency();
-  const { sendMessage, approveMilestone } = usePortal();
+  const { sendMessage, approveMilestone, getMessages } = usePortal();
   const [activeTab, setActiveTab] = useState<'overview' | 'staging' | 'feedback' | 'files' | 'changes' | 'messages' | 'retainer'>('overview');
 
   // Feedback Form State
@@ -62,6 +62,17 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({ project, onLogout, o
   const [messages, setMessages] = useState(project.messages);
   const [newMessageText, setNewMessageText] = useState('');
 
+  // Fetch the real message thread (client + studio replies) from the worker.
+  useEffect(() => {
+    let active = true;
+    getMessages(project.id).then((thread) => {
+      if (active) setMessages(thread);
+    });
+    return () => {
+      active = false;
+    };
+  }, [project.id, getMessages]);
+
   // Pending Items State
   const [pendingItems, setPendingItems] = useState<PendingClientItem[]>(project.pendingItems);
   const [uploadModalItem, setUploadModalItem] = useState<PendingClientItem | null>(null);
@@ -71,16 +82,22 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({ project, onLogout, o
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [paymentState, setPaymentState] = useState(project.payment);
 
-  const stages = [
-    { id: 'discovery', label: 'Discovery' },
-    { id: 'design', label: 'Design' },
-    { id: 'development', label: 'Development' },
-    { id: 'qa', label: 'QA' },
-    { id: 'launch', label: 'Launch' },
-    { id: 'support', label: 'Support' }
+  const PROCESS_STEPS = [
+    'First Contact',
+    'Qualification',
+    'Proposal',
+    'Kickoff',
+    'Discovery',
+    'UI/UX Design',
+    'Engineering',
+    'QA & Audit',
+    'Final Review',
+    'Launch',
+    'Warranty',
   ];
-
-  const currentStageIndex = stages.findIndex(s => s.id === project.currentStage);
+  const totalSteps = project.totalSteps ?? 11;
+  const currentStep = Math.max(0, Math.min(project.step ?? 0, totalSteps - 1));
+  const progressPct = Math.round(((currentStep + 1) / totalSteps) * 100);
 
   // Submit Feedback Handler
   const handleAddFeedback = (e: React.FormEvent) => {
@@ -219,26 +236,33 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({ project, onLogout, o
         </div>
       </div>
 
-      {/* Lifecycle Stepper (Discovery -> Design -> Development -> QA -> Launch -> Support) */}
+      {/* 11-Step Process Tracker (synced from CRM) */}
       <div className="p-6 rounded-3xl glass-panel border border-border bg-surface">
         <div className="flex items-center justify-between mb-4">
           <span className="text-xs uppercase tracking-wider font-semibold text-[#00D4FF]">
-            Studio Master Lifecycle
+            11-Step Delivery Process
           </span>
           <span className="text-xs font-mono text-[#3DDC97]">
-            Active Stage: {stages[currentStageIndex]?.label || 'In Progress'} ({project.stageProgress}%)
+            Step {currentStep + 1} of {totalSteps} · {progressPct}%
           </span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {stages.map((stage, idx) => {
-            const isCompleted = idx < currentStageIndex;
-            const isCurrent = idx === currentStageIndex;
+        <div className="w-full bg-surface rounded-full h-2 mb-4 overflow-hidden">
+          <div
+            className="bg-gradient-to-r from-[#6C63FF] to-[#3DDC97] h-2 rounded-full transition-all duration-500"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+
+        <div className="flex gap-2 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {PROCESS_STEPS.map((label, idx) => {
+            const isCompleted = idx < currentStep;
+            const isCurrent = idx === currentStep;
             return (
-              <div 
-                key={stage.id}
-                className={`p-3.5 rounded-2xl border transition-all ${
-                  isCurrent 
+              <div
+                key={label}
+                className={`shrink-0 min-w-[128px] p-3 rounded-2xl border transition-all ${
+                  isCurrent
                     ? 'bg-[#6C63FF]/20 border-[#00D4FF] shadow-lg shadow-[#6C63FF]/15'
                     : isCompleted
                     ? 'bg-surface border-[#3DDC97]/40 text-foreground'
@@ -246,7 +270,7 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({ project, onLogout, o
                 }`}
               >
                 <div className="flex items-center justify-between text-xs mb-1.5">
-                  <span className="font-mono text-[10px] opacity-75">0{idx + 1}</span>
+                  <span className="font-mono text-[10px] opacity-75">{String(idx + 1).padStart(2, '0')}</span>
                   {isCompleted ? (
                     <CheckCircle2 className="w-3.5 h-3.5 text-[#3DDC97]" />
                   ) : isCurrent ? (
@@ -255,11 +279,11 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({ project, onLogout, o
                     <Clock className="w-3 h-3 text-foreground/20" />
                   )}
                 </div>
-                <div className="font-display font-semibold text-sm text-foreground">
-                  {stage.label}
+                <div className="font-display font-semibold text-xs text-foreground leading-tight">
+                  {label}
                 </div>
-                <div className="text-[11px] text-muted-foreground mt-0.5">
-                  {isCurrent ? 'Current Active' : isCompleted ? 'Completed' : 'Upcoming'}
+                <div className="text-[10px] text-muted-foreground mt-0.5">
+                  {isCurrent ? 'In progress' : isCompleted ? 'Done' : 'Upcoming'}
                 </div>
               </div>
             );

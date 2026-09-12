@@ -21,6 +21,8 @@ export interface PortalProject {
   status?: string;
   stage?: string;
   summary?: string;
+  step?: number;
+  total_steps?: number;
   created_at?: string;
   milestones?: { id: string; name: string; status?: string; due_date?: string }[];
 }
@@ -103,5 +105,29 @@ export async function approvePortalMilestone(
     return res.ok;
   } catch {
     return false;
+  }
+}
+
+/** A single message in a portal thread (client + studio replies). */
+export interface PortalThreadMessage {
+  id: string;
+  project_id: string;
+  sender: 'client' | 'studio';
+  text: string;
+  created_at: string;
+}
+
+/** Fetch the full message thread for a project (client + studio replies). */
+export async function getPortalMessages(projectId: string): Promise<PortalThreadMessage[]> {
+  try {
+    const res = await fetch(
+      `${PORTAL_API}/api/portal/messages?project_id=${encodeURIComponent(projectId)}`,
+      { credentials: 'include' }
+    );
+    if (!res.ok) return [];
+    const data = (await res.json()) as { messages?: PortalThreadMessage[] };
+    return data.messages ?? [];
+  } catch {
+    return [];
   }
 }

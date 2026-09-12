@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useCallback,
 } from 'react';
-import type { PortalProject, ProjectLifecycleStage } from '@/types';
+import type { PortalProject, ProjectLifecycleStage, ProjectMessage } from '@/types';
 import { mockClientProject } from '@/data/mockData';
 import {
   getPortalSession,
@@ -16,6 +16,7 @@ import {
   getPortalData,
   sendPortalMessage,
   approvePortalMilestone,
+  getPortalMessages,
 } from '@/lib/portal';
 
 interface PortalContextType {
@@ -28,6 +29,7 @@ interface PortalContextType {
   completeOnboarding: (project: PortalProject) => void;
   sendMessage: (projectId: string, text: string) => Promise<boolean>;
   approveMilestone: (projectId: string, milestoneId: string, milestoneName: string) => Promise<boolean>;
+  getMessages: (projectId: string) => Promise<ProjectMessage[]>;
 }
 
 const PortalContext = createContext<PortalContextType | undefined>(undefined);
@@ -65,6 +67,8 @@ function mapPortalDataToProject(
     status?: string;
     stage?: string;
     summary?: string;
+    step?: number;
+    total_steps?: number;
     milestones?: { id: string; name: string; status?: string; due_date?: string }[];
   },
   email: string
@@ -108,6 +112,8 @@ function mapPortalDataToProject(
     activityLog: [],
     retainerPlan: undefined,
     milestones,
+    step: p.step ?? 0,
+    totalSteps: p.total_steps ?? 11,
   };
 }
 
@@ -167,6 +173,17 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({
     []
   );
 
+  const getMessages = useCallback((projectId: string) => {
+    return getPortalMessages(projectId).then((msgs) =>
+      msgs.map((m) => ({
+        id: m.id,
+        sender: (m.sender === 'studio' ? 'bitnexel' : 'client') as 'client' | 'bitnexel',
+        text: m.text,
+        timestamp: m.created_at,
+      }))
+    );
+  }, []);
+
   return (
     <PortalContext.Provider
       value={{
@@ -179,6 +196,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({
         completeOnboarding,
         sendMessage,
         approveMilestone,
+        getMessages,
       }}
     >
       {children}
