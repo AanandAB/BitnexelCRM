@@ -45,11 +45,20 @@ export const metadata: Metadata = {
     url: SITE,
     title: 'Bitnexel — High-Performance Software & Systems Studio',
     description: DESCRIPTION,
+    images: [
+      {
+        url: '/og.png',
+        width: 1200,
+        height: 630,
+        alt: 'Bitnexel — High-Performance Software & Systems Studio',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Bitnexel — High-Performance Software & Systems Studio',
     description: DESCRIPTION,
+    images: ['/og.png'],
   },
   formatDetection: { email: false, address: false, telephone: false },
 };
