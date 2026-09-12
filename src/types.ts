@@ -163,6 +163,8 @@ export interface PortalProject {
     responseGuarantee: string;
     monthlyHoursRemaining?: number;
   };
+  /** Real milestones synced from the CRM (for the 2-way approve flow). */
+  milestones?: { id: string; name: string; status?: string; due_date?: string }[];
 }
 
 export interface OnboardingState {

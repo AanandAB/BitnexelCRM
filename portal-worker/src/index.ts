@@ -389,6 +389,62 @@ export default {
       return json({ ok: true, clients, projects, milestones }, 200, cors);
     }
 
+    // ── Portal client actions (session-authed) → events for CRM pull ────────
+    if (path === '/api/portal/message' && request.method === 'POST') {
+      const session = await getSession(env, getCookie(request, SESSION_COOKIE));
+      if (!session) return json({ error: 'Unauthorized' }, 401, cors);
+      let body: { project_id?: string; text?: string };
+      try { body = await request.json(); } catch { return json({ error: 'Invalid JSON' }, 400, cors); }
+      const text = String(body?.text ?? '').trim();
+      if (!text) return json({ error: 'Message is required' }, 400, cors);
+      const id = crypto.randomUUID();
+      await env.DB.prepare(
+        'INSERT INTO portal_events (id, client_email, project_id, type, payload, created_at, synced) VALUES (?, ?, ?, ?, ?, ?, 0)'
+      ).bind(id, session.email, String(body?.project_id ?? ''), 'message', JSON.stringify({ text, sender: 'client' }), new Date().toISOString()).run();
+      return json({ ok: true, id }, 200, cors);
+    }
+
+    if (path === '/api/portal/milestone/approve' && request.method === 'POST') {
+      const session = await getSession(env, getCookie(request, SESSION_COOKIE));
+      if (!session) return json({ error: 'Unauthorized' }, 401, cors);
+      let body: { project_id?: string; milestone_id?: string; milestone_name?: string };
+      try { body = await request.json(); } catch { return json({ error: 'Invalid JSON' }, 400, cors); }
+      const milestoneId = String(body?.milestone_id ?? '').trim();
+      if (!milestoneId) return json({ error: 'milestone_id is required' }, 400, cors);
+      const id = crypto.randomUUID();
+      await env.DB.prepare(
+        'INSERT INTO portal_events (id, client_email, project_id, type, payload, created_at, synced) VALUES (?, ?, ?, ?, ?, ?, 0)'
+      ).bind(id, session.email, String(body?.project_id ?? ''), 'milestone_approval', JSON.stringify({ milestone_id: milestoneId, milestone_name: String(body?.milestone_name ?? '') }), new Date().toISOString()).run();
+      return json({ ok: true, id }, 200, cors);
+    }
+
+    // CRM pulls unsynced client actions (token-authed, mirrors the lead worker).
+    if (path === '/api/portal/events' && request.method === 'GET') {
+      const auth = request.headers.get('Authorization') || '';
+      if (auth !== `Bearer ${env.PORTAL_SYNC_TOKEN}`) return json({ error: 'Unauthorized' }, 401, cors);
+      const rows = await env.DB.prepare(
+        'SELECT id, client_email, project_id, type, payload, created_at FROM portal_events WHERE synced = 0 ORDER BY created_at ASC LIMIT 100'
+      ).all();
+      const events = (rows.results ?? []).map((r: any) => ({
+        id: r.id,
+        client_email: r.client_email,
+        project_id: r.project_id,
+        type: r.type,
+        payload: r.payload ? JSON.parse(r.payload) : {},
+        created_at: r.created_at,
+      }));
+      return json({ events }, 200, cors);
+    }
+
+    if (path.startsWith('/api/portal/events/') && path.endsWith('/ack') && request.method === 'PATCH') {
+      const auth = request.headers.get('Authorization') || '';
+      if (auth !== `Bearer ${env.PORTAL_SYNC_TOKEN}`) return json({ error: 'Unauthorized' }, 401, cors);
+      const id = path.split('/')[4] ?? '';
+      if (!id) return json({ error: 'Bad request' }, 400, cors);
+      await env.DB.prepare('UPDATE portal_events SET synced = 1 WHERE id = ?').bind(id).run();
+      return json({ ok: true }, 200, cors);
+    }
+
     return json({ error: 'Not found' }, 404, cors);
   },
 };

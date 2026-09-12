@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { PortalProject, FeedbackItem, ChangeRequest, PendingClientItem, RouteType } from '../types';
 import { useCurrency } from '../context/CurrencyContext';
+import { usePortal } from '../context/PortalContext';
 import { 
   CheckCircle2, 
   Clock, 
@@ -35,6 +36,7 @@ interface ClientPortalProps {
 
 export const ClientPortal: React.FC<ClientPortalProps> = ({ project, onLogout, onNavigate }) => {
   const { formatAmount, currency } = useCurrency();
+  const { sendMessage, approveMilestone } = usePortal();
   const [activeTab, setActiveTab] = useState<'overview' | 'staging' | 'feedback' | 'files' | 'changes' | 'messages' | 'retainer'>('overview');
 
   // Feedback Form State
@@ -136,18 +138,8 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({ project, onLogout, o
     setMessages([...messages, msg]);
     setNewMessageText('');
 
-    // Simulate studio response
-    setTimeout(() => {
-      setMessages(prev => [
-        ...prev,
-        {
-          id: `msg-resp-${Date.now()}`,
-          sender: 'bitnexel',
-          text: "Thanks for the update! Our engineering team has logged this and will incorporate it into today's staging sprint.",
-          timestamp: 'Just now'
-        }
-      ]);
-    }, 1800);
+    // Push the message upstream so it syncs into the CRM.
+    sendMessage(project.id, msg.text);
   };
 
   // Resolve Pending Item
@@ -375,6 +367,60 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({ project, onLogout, o
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Milestones & Approvals (real, synced from CRM) */}
+          <div className="p-6 sm:p-8 rounded-3xl glass-panel border border-border space-y-4">
+            <div>
+              <span className="text-xs uppercase tracking-wider font-semibold text-[#00D4FF]">
+                Milestones & Approvals
+              </span>
+              <h3 className="text-lg font-display font-bold text-foreground mt-0.5">
+                Review & sign off on deliverables
+              </h3>
+            </div>
+
+            {(project.milestones ?? []).length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                No milestones have been synced from the studio yet.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {(project.milestones ?? []).map((m) => (
+                  <div
+                    key={m.id}
+                    className="p-4 rounded-2xl bg-surface border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-sm text-foreground">{m.name}</span>
+                        {m.status === 'done' ? (
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-[#3DDC97]/10 border border-[#3DDC97]/20 text-[#3DDC97]">
+                            Approved
+                          </span>
+                        ) : (
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-surface border border-border text-muted-foreground">
+                            Pending
+                          </span>
+                        )}
+                      </div>
+                      {m.due_date && (
+                        <div className="text-[11px] text-muted-foreground">Due: {m.due_date}</div>
+                      )}
+                    </div>
+                    {m.status !== 'done' && (
+                      <button
+                        onClick={() => approveMilestone(project.id, m.id, m.name)}
+                        className="px-4 py-2 rounded-xl bg-[#3DDC97]/15 hover:bg-[#3DDC97]/25 border border-[#3DDC97]/30 text-[#3DDC97] text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Approve</span>
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Pending Items From Client */}

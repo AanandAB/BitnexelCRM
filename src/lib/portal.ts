@@ -71,3 +71,37 @@ export async function getPortalData(): Promise<PortalData | null> {
     return null;
   }
 }
+
+/** Send a message from the client on the portal (flows back to the CRM). */
+export async function sendPortalMessage(projectId: string, text: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${PORTAL_API}/api/portal/message`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: projectId, text }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/** Approve a milestone from the client on the portal (flows back to the CRM). */
+export async function approvePortalMilestone(
+  projectId: string,
+  milestoneId: string,
+  milestoneName: string
+): Promise<boolean> {
+  try {
+    const res = await fetch(`${PORTAL_API}/api/portal/milestone/approve`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ project_id: projectId, milestone_id: milestoneId, milestone_name: milestoneName }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}

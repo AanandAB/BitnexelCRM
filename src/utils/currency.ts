@@ -137,21 +137,21 @@ export interface StudioPricingTier {
 export const PRICING_BRACKETS: Record<string, Record<CurrencyCode, StudioPricingTier>> = {
   website: {
     INR: {
-      range: '₹10,000 – ₹50,000',
-      startingAt: '₹10,000',
-      minAmount: 10000,
+      range: '₹15,000 – ₹50,000',
+      startingAt: '₹15,000',
+      minAmount: 15000,
       maxAmount: 50000
     },
     AED: {
-      range: 'AED 500 – AED 2,500',
-      startingAt: 'AED 500',
-      minAmount: 500,
+      range: 'AED 750 – AED 2,500',
+      startingAt: 'AED 750',
+      minAmount: 750,
       maxAmount: 2500
     },
     USD: {
-      range: '$150 – $750',
-      startingAt: '$150',
-      minAmount: 150,
+      range: '$225 – $750',
+      startingAt: '$225',
+      minAmount: 225,
       maxAmount: 750
     }
   },
@@ -223,19 +223,19 @@ export const RETAINER_PRICING: Record<string, Record<CurrencyCode, { monthly: nu
  */
 export const CALCULATOR_DEFAULTS: Record<CurrencyCode, { min: number; max: number; step: number; initial: number }> = {
   INR: {
-    min: 10000,
+    min: 15000,
     max: 500000,
     step: 10000,
     initial: 200000
   },
   AED: {
-    min: 500,
+    min: 750,
     max: 25000,
     step: 500,
     initial: 10000
   },
   USD: {
-    min: 150,
+    min: 225,
     max: 7000,
     step: 250,
     initial: 3000
@@ -248,17 +248,17 @@ export const CALCULATOR_DEFAULTS: Record<CurrencyCode, { min: number; max: numbe
 export const WIZARD_BUDGET_OPTIONS: Record<'website' | 'software' | 'webapp', Record<CurrencyCode, string[]>> = {
   website: {
     INR: [
-      '₹10,000 – ₹25,000 (Core Flagship)',
+      '₹15,000 – ₹25,000 (Core Flagship)',
       '₹25,000 – ₹40,000 (Expanded Multi-Page)',
       '₹40,000+ (Headless Enterprise)'
     ],
     AED: [
-      'AED 500 – AED 1,250 (Core Flagship)',
+      'AED 750 – AED 1,250 (Core Flagship)',
       'AED 1,250 – AED 2,000 (Expanded Multi-Page)',
       'AED 2,000+ (Headless Enterprise)'
     ],
     USD: [
-      '$150 – $375 (Core Flagship)',
+      '$225 – $375 (Core Flagship)',
       '$375 – $600 (Expanded Multi-Page)',
       '$600+ (Headless Enterprise)'
     ]
@@ -304,19 +304,19 @@ export const WIZARD_BUDGET_OPTIONS: Record<'website' | 'software' | 'webapp', Re
  */
 export const CONTACT_BUDGET_OPTIONS: Record<CurrencyCode, string[]> = {
   INR: [
-    '₹10,000 – ₹50,000 (Flagship Website)',
+    '₹15,000 – ₹50,000 (Flagship Website)',
     '₹1,00,000 – ₹2,50,000 (Custom Software / Portal)',
     '₹2,00,000 – ₹5,00,000+ (Full Web App / SaaS)',
     'Exploring / Scope Dependent'
   ],
   AED: [
-    'AED 500 – AED 2,500 (Flagship Website)',
+    'AED 750 – AED 2,500 (Flagship Website)',
     'AED 5,000 – AED 12,500 (Custom Software / Portal)',
     'AED 10,000 – AED 25,000+ (Full Web App / SaaS)',
     'Exploring / Scope Dependent'
   ],
   USD: [
-    '$150 – $750 (Flagship Website)',
+    '$225 – $750 (Flagship Website)',
     '$1,500 – $3,500 (Custom Software / Portal)',
     '$3,000 – $7,000+ (Full Web App / SaaS)',
     'Exploring / Scope Dependent'
