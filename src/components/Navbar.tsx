@@ -228,8 +228,8 @@ export const Navbar: React.FC<NavbarProps> = ({ currentRoute, onNavigate, isLogg
             <span>{isLoggedIn ? 'Client Portal' : 'Login'}</span>
           </button>
 
-          {/* Primary Apple Pill CTA */}
-          <div className="relative">
+          {/* Primary Apple Pill CTA — desktop only (mobile uses the drawer) */}
+          <div className="relative hidden sm:block">
             <GlowEffect
               colors={['#FF5733', '#33FF57', '#3357FF', '#F1C40F']}
               mode="colorShift"

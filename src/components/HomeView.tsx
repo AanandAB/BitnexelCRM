@@ -138,14 +138,14 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onSelectCaseStud
   const activeData = disciplines[activeDiscipline];
 
   return (
-    <div id="home-view" className="space-y-24 sm:space-y-36 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div id="home-view" className="space-y-16 sm:space-y-36 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       
       {/* 1. Hero Product Section - Apple Style */}
       <section className="pt-8 sm:pt-14 text-center space-y-6">
         
         {/* Apple Category Tagline */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-surface border border-border text-foreground text-[12px] font-normal tracking-tight">
-          <Sparkles className="w-3.5 h-3.5 text-[#2997ff]" />
+        <div className="inline-flex flex-wrap items-center justify-center gap-x-2 gap-y-1 px-3.5 py-1 rounded-full bg-surface border border-border text-foreground text-[12px] font-normal tracking-tight max-w-full">
+          <Sparkles className="w-3.5 h-3.5 text-[#2997ff] shrink-0" />
           <span>Bitnexel Engineering Studio · 2026 Systems Architecture</span>
         </div>
 
@@ -203,7 +203,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onNavigate, onSelectCaseStud
           </div>
 
           {/* Interactive Discipline Switcher */}
-          <div className="flex items-center p-1 rounded-full bg-muted border border-border">
+          <div className="flex flex-wrap items-center justify-center p-1 rounded-full bg-muted border border-border max-w-full">
             {(['website', 'software', 'webapp'] as const).map((key) => (
               <button
                 key={key}
