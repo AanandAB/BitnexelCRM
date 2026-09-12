@@ -62,7 +62,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onNavigate }) => {
         </div>
 
         <button
-          onClick={login}
+          onClick={() => login()}
           className="w-full py-3.5 px-4 rounded-xl bg-surface hover:bg-surface/80 border border-border text-foreground text-sm font-semibold flex items-center justify-center gap-3 transition-all hover:border-foreground/30 shadow"
         >
           <GoogleMark />

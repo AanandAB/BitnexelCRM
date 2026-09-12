@@ -46,9 +46,15 @@ export async function getPortalSession(): Promise<PortalSession> {
   }
 }
 
-/** Kick off the Google sign-in (full-page redirect to the worker). */
-export function startGoogleLogin(): void {
-  window.location.href = `${PORTAL_API}/api/auth/login`;
+/** Kick off the Google sign-in (full-page redirect to the worker).
+ *  Pass an optional `returnTo` path (e.g. '/start') to land back there after login. */
+export function startGoogleLogin(returnTo?: string): void {
+  const params = new URLSearchParams();
+  if (returnTo && returnTo.startsWith('/')) {
+    params.set('returnTo', returnTo);
+  }
+  const qs = params.toString();
+  window.location.href = `${PORTAL_API}/api/auth/login${qs ? `?${qs}` : ''}`;
 }
 
 /** Revoke the session and clear the cookie. */

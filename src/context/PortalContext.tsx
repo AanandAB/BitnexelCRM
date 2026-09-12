@@ -23,8 +23,9 @@ interface PortalContextType {
   isLoggedIn: boolean;
   loading: boolean;
   email: string | null;
+  name: string | null;
   activeProject: PortalProject;
-  login: () => void;
+  login: (returnTo?: string) => void;
   logout: () => void;
   completeOnboarding: (project: PortalProject) => void;
   sendMessage: (projectId: string, text: string) => Promise<boolean>;
@@ -129,6 +130,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState<string | null>(null);
+  const [name, setName] = useState<string | null>(null);
   const [activeProject, setActiveProject] = useState<PortalProject>(mockClientProject);
 
   useEffect(() => {
@@ -136,6 +138,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({
       const session = await getPortalSession();
       setIsLoggedIn(session.loggedIn);
       setEmail(session.email ?? null);
+      setName(session.name ?? null);
       if (session.loggedIn) {
         const data = await getPortalData();
         if (data && data.projects.length > 0) {
@@ -146,8 +149,8 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({
     })();
   }, []);
 
-  const login = useCallback(() => {
-    startGoogleLogin();
+  const login = useCallback((returnTo?: string) => {
+    startGoogleLogin(returnTo);
   }, []);
 
   const logout = useCallback(() => {
@@ -190,6 +193,7 @@ export const PortalProvider: React.FC<{ children: React.ReactNode }> = ({
         isLoggedIn,
         loading,
         email,
+        name,
         activeProject,
         login,
         logout,

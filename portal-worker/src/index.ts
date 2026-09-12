@@ -175,7 +175,12 @@ export default {
       const challenge = await sha256Base64url(verifier);
       const redirectUri = `https://${hostname}/api/auth/callback`;
 
-      const oauthCookieValue = JSON.stringify({ state, verifier });
+      // Optional return path (e.g. /start) — the callback redirects here on success.
+      const returnTo = url.searchParams.get('returnTo') || '';
+      const safeReturnTo =
+        returnTo.startsWith('/') && !returnTo.startsWith('//') ? returnTo : '/portal';
+
+      const oauthCookieValue = JSON.stringify({ state, verifier, returnTo: safeReturnTo });
       const params = new URLSearchParams({
         client_id: env.GOOGLE_CLIENT_ID,
         redirect_uri: redirectUri,
@@ -267,9 +272,24 @@ export default {
 
       const sessionToken = await createSession(env, email, user.name ?? email);
 
+      // Honor the returnTo path captured at login (default /portal).
+      let returnTo = '/portal';
+      try {
+        const parsed = JSON.parse(decodeURIComponent(oauthCookie));
+        if (
+          typeof parsed.returnTo === 'string' &&
+          parsed.returnTo.startsWith('/') &&
+          !parsed.returnTo.startsWith('//')
+        ) {
+          returnTo = parsed.returnTo;
+        }
+      } catch {
+        // keep default
+      }
+
       const headers = new Headers();
       for (const [k, v] of Object.entries(SECURITY_HEADERS)) headers.set(k, v);
-      headers.set('Location', `${env.SITE_ORIGIN}/portal`);
+      headers.set('Location', `${env.SITE_ORIGIN}${returnTo}`);
       headers.append(
         'Set-Cookie',
         `${SESSION_COOKIE}=${sessionToken}; ${cookieAttributes(hostname, SESSION_TTL_SECONDS)}`

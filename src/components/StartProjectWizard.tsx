@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ServiceBranch, OnboardingState, PortalProject, RouteType } from '../types';
+import { ServiceBranch, OnboardingState, RouteType } from '../types';
 import { useCurrency } from '../context/CurrencyContext';
+import { usePortal } from '../context/PortalContext';
 import { WIZARD_BUDGET_OPTIONS } from '../utils/currency';
 import { 
   Globe, 
@@ -26,13 +27,11 @@ import { submitLead } from '../lib/leads';
 interface StartProjectWizardProps {
   initialBranch?: ServiceBranch | null;
   onNavigate: (route: RouteType) => void;
-  onCompleteOnboarding: (newProject: PortalProject) => void;
 }
 
 export const StartProjectWizard: React.FC<StartProjectWizardProps> = ({ 
   initialBranch = null, 
-  onNavigate,
-  onCompleteOnboarding 
+  onNavigate
 }) => {
   const { currency, formatAmount, getPricingBracket } = useCurrency();
   const [branch, setBranch] = useState<ServiceBranch | null>(initialBranch);
@@ -74,15 +73,11 @@ export const StartProjectWizard: React.FC<StartProjectWizardProps> = ({
     existingDesigns: ''
   });
 
-  const [accountInfo, setAccountInfo] = useState({
-    name: '',
-    email: '',
-    company: '',
-    password: ''
-  });
+  const { email: clientEmail, name: clientName } = usePortal();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showReviewScreen, setShowReviewScreen] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   // Total steps per branch
   const getTotalSteps = () => {
@@ -133,121 +128,42 @@ export const StartProjectWizard: React.FC<StartProjectWizardProps> = ({
     }
   };
 
-  const handleFinalSubmit = (e: React.FormEvent) => {
+  const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!accountInfo.email || !accountInfo.name) return;
+    if (!clientEmail) return;
 
     setIsSubmitting(true);
 
-    setTimeout(() => {
-      // Create new scoped project for portal
-      const categoryMap = {
-        website: 'Website' as const,
-        software: 'Custom Software' as const,
-        webapp: 'Web App' as const
-      };
+    const categoryMap = {
+      website: 'Website' as const,
+      software: 'Custom Software' as const,
+      webapp: 'Web App' as const
+    };
+    const branchName = branch ? categoryMap[branch] : 'Web App';
+    const projectName = answers.projectName || `${clientName || clientEmail.split('@')[0]}'s ${branchName}`;
 
-      const branchName = branch ? categoryMap[branch] : 'Web App';
-      const projectName = answers.projectName || `${accountInfo.company || accountInfo.name}'s ${branchName}`;
-
-      const bracket = getPricingBracket(branch || 'webapp');
-      let budgetNumber = bracket.minAmount;
-      if (answers.budgetRange) {
-        if (answers.budgetRange.includes('+')) {
-          budgetNumber = Math.round(bracket.maxAmount * 1.25);
-        } else if (answers.budgetRange.includes('–') || answers.budgetRange.includes('-')) {
-          budgetNumber = Math.round((bracket.minAmount + bracket.maxAmount) / 2);
-        }
+    const bracket = getPricingBracket(branch || 'webapp');
+    let budgetNumber = bracket.minAmount;
+    if (answers.budgetRange) {
+      if (answers.budgetRange.includes('+')) {
+        budgetNumber = Math.round(bracket.maxAmount * 1.25);
+      } else if (answers.budgetRange.includes('–') || answers.budgetRange.includes('-')) {
+        budgetNumber = Math.round((bracket.minAmount + bracket.maxAmount) / 2);
       }
+    }
 
-      const newProject: PortalProject = {
-        id: `proj-${Date.now().toString().slice(-4)}`,
-        name: projectName,
-        clientName: accountInfo.name,
-        clientEmail: accountInfo.email,
-        clientCompany: accountInfo.company || 'Private Client',
-        category: branchName,
-        currentStage: 'discovery',
-        stageProgress: 12,
-        statusSummary: `Discovery phase initiated: SOW blueprint generated from your ${branchName.toLowerCase()} specifications. Studio team reviewing architectural requirements.`,
-        nextMilestone: 'Founder Discovery Call & Architecture Proposal',
-        nextMilestoneDueDate: 'Within 24 Hours',
-        stagingUrl: undefined,
-        payment: {
-          totalBudget: budgetNumber,
-          percentReceived: 0,
-          amountPaid: 0,
-          nextDueAmount: Math.round(budgetNumber * 0.5),
-          nextDueCondition: 'Standard 50% advance milestone deposit upon SOW sign-off to initiate sprints',
-          milestones: [
-            { name: 'Advance Milestone Deposit (50%)', percent: 50, amount: Math.round(budgetNumber * 0.5), status: 'current' },
-            { name: 'Design Sign-Off & Architecture (30%)', percent: 30, amount: Math.round(budgetNumber * 0.3), status: 'upcoming' },
-            { name: 'Launch & Handover (20%)', percent: 20, amount: Math.round(budgetNumber * 0.2), status: 'upcoming' },
-          ]
-        },
-        pendingItems: [
-          {
-            id: 'item-new-1',
-            title: 'Schedule 30-Minute Founder Alignment Call',
-            description: 'Pick a convenient slot for technical scope alignment and contract review.',
-            status: 'pending',
-            dueDate: 'Tomorrow',
-            category: 'Onboarding'
-          }
-        ],
-        files: [
-          {
-            id: 'f-draft-1',
-            name: `${projectName.replace(/\s+/g, '_')}_Intake_Spec.pdf`,
-            size: '1.2 MB',
-            type: 'PDF',
-            category: 'Specification',
-            date: 'Just now'
-          }
-        ],
-        feedbackItems: [],
-        changeRequests: [],
-        messages: [
-          {
-            id: 'msg-welcome',
-            sender: 'bitnexel',
-            text: `Welcome to Bitnexel, ${accountInfo.name.split(' ')[0]}! Your intake specifications for ${projectName} have been secured. We are preparing your initial statement of work and milestone schedule.`,
-            timestamp: 'Just now'
-          }
-        ],
-        activityLog: [
-          {
-            id: 'act-new-1',
-            title: 'Project Initialized from Intake Wizard',
-            description: `Requirements recorded for ${branchName} build. Discovery sprint queue scheduled.`,
-            timestamp: 'Just now',
-            author: accountInfo.name,
-            stage: 'discovery'
-          }
-        ],
-        retainerPlan: {
-          tier: 'Growth',
-          uptime: 'Configuring',
-          lastBackup: 'Pending First Staging Deploy',
-          responseGuarantee: '< 2 Hours SLA',
-          monthlyHoursRemaining: 10
-        }
-      };
+    // Push the intake into the CRM lead pipeline using the verified Google email.
+    await submitLead({
+      name: clientName || clientEmail.split('@')[0],
+      email: clientEmail,
+      service: branchName,
+      budget: String(budgetNumber),
+      message: `Project: ${projectName} | Goal: ${answers.mainGoal || 'n/a'} | Features: ${(answers.features || []).join(', ') || 'n/a'} | Timeline: ${answers.timeline || 'n/a'}`,
+      source: 'Intake Wizard',
+    });
 
-      // Push the intake into the CRM lead pipeline (best-effort).
-      submitLead({
-        name: newProject.clientName,
-        email: newProject.clientEmail,
-        company: newProject.clientCompany,
-        service: newProject.category,
-        budget: String(newProject.payment.totalBudget),
-        message: `Project: ${newProject.name} | Goal: ${answers.mainGoal || 'n/a'} | Features: ${(answers.features || []).join(', ') || 'n/a'} | Timeline: ${answers.timeline || 'n/a'}`,
-        source: 'Intake Wizard',
-      });
-
-      setIsSubmitting(false);
-      onCompleteOnboarding(newProject);
-    }, 700);
+    setIsSubmitting(false);
+    setSubmitted(true);
   };
 
   // Step 0: The Fork
@@ -479,6 +395,39 @@ export const StartProjectWizard: React.FC<StartProjectWizardProps> = ({
             </div>
           </div>
         )}
+      </div>
+    );
+  }
+
+  // Thank-you / confirmation after a successful submission (no mock project).
+  if (submitted) {
+    return (
+      <div className="min-h-[80vh] flex flex-col items-center justify-center max-w-2xl mx-auto px-4 py-12 text-center">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#3DDC97]/20 border border-[#3DDC97]/40 text-[#3DDC97] text-xs font-semibold uppercase tracking-wider mb-6">
+          <CheckCircle2 className="w-3.5 h-3.5" /> Request Received
+        </div>
+        <h1 className="text-3xl sm:text-4xl font-display font-bold text-foreground tracking-tight">
+          Thanks{clientName ? `, ${clientName.split(' ')[0]}` : ''}!
+        </h1>
+        <p className="mt-4 text-base text-muted-foreground max-w-lg">
+          Your project brief is with our studio team. We'll review it and reach out within 24 hours to schedule your founder discovery call.
+        </p>
+        <div className="mt-8 p-5 rounded-2xl glass-panel border border-border bg-surface text-left text-sm space-y-2 w-full max-w-md">
+          <div className="flex items-center gap-2 text-[#00D4FF] font-semibold">
+            <Sparkles className="w-4 h-4" /> What happens next
+          </div>
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            Once we begin, your project timeline, milestones, staging link and live progress will appear in your client portal.
+          </p>
+        </div>
+        <div className="mt-8 flex flex-col sm:flex-row gap-3">
+          <button onClick={() => onNavigate('portal')} className="px-8 py-3.5 rounded-xl bg-[#00D4FF] text-[#07080C] font-semibold text-sm hover:bg-[#38e1ff] transition-all flex items-center justify-center gap-2">
+            Open Your Portal <ArrowRight className="w-4 h-4" />
+          </button>
+          <button onClick={() => onNavigate('home')} className="px-8 py-3.5 rounded-xl bg-surface hover:bg-surface/80 border border-border text-foreground font-semibold text-sm transition-all">
+            Back to Home
+          </button>
+        </div>
       </div>
     );
   }
@@ -1413,17 +1362,17 @@ export const StartProjectWizard: React.FC<StartProjectWizardProps> = ({
               </div>
             </div>
           ) : (
-            /* Final Summary & Lightweight Account Creation */
+            /* Final Summary & Submission */
             <div className="space-y-8 animate-in fade-in duration-200">
               <div>
                 <span className="text-xs uppercase tracking-widest font-semibold text-[#3DDC97]">
                   Intake Complete
                 </span>
                 <h2 className="text-3xl font-display font-bold text-foreground mt-1">
-                  Ready to deploy your Bitnexel Client Portal
+                  Ready to send your project brief
                 </h2>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Review your project specifications below. Create your lightweight credentials to access your private timeline, staging link, and live milestones.
+                  Review your specifications below, then submit. Your signed-in Google account is used for your private client portal.
                 </p>
               </div>
 
@@ -1484,68 +1433,26 @@ export const StartProjectWizard: React.FC<StartProjectWizardProps> = ({
                 </button>
               </div>
 
-              {/* Account Creation Form */}
+              {/* Signed-in identity + submit (Google session, no fake credentials) */}
               <form onSubmit={handleFinalSubmit} className="space-y-4 pt-2">
-                <div className="text-sm font-semibold text-foreground">
-                  Create Your Client Portal Access
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                      Your Full Name *
-                    </label>
-                    <input
-                      id="account-input-name"
-                      type="text"
-                      required
-                      placeholder="e.g. Alex Morgan"
-                      value={accountInfo.name}
-                      onChange={(e) => setAccountInfo(prev => ({ ...prev, name: e.target.value }))}
-                      className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-foreground focus:outline-none focus:border-[#00D4FF]"
-                    />
+                <div className="p-4 rounded-2xl bg-surface border border-border flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#6C63FF]/20 flex items-center justify-center shrink-0">
+                    <span className="text-sm font-bold text-[#00D4FF]">
+                      {clientEmail ? clientEmail.charAt(0).toUpperCase() : '?'}
+                    </span>
                   </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                      Work Email *
-                    </label>
-                    <input
-                      id="account-input-email"
-                      type="email"
-                      required
-                      placeholder="alex@company.com"
-                      value={accountInfo.email}
-                      onChange={(e) => setAccountInfo(prev => ({ ...prev, email: e.target.value }))}
-                      className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-foreground focus:outline-none focus:border-[#00D4FF]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                      Company / Organization Name
-                    </label>
-                    <input
-                      id="account-input-company"
-                      type="text"
-                      placeholder="e.g. Morgan Capital"
-                      value={accountInfo.company}
-                      onChange={(e) => setAccountInfo(prev => ({ ...prev, company: e.target.value }))}
-                      className="w-full px-4 py-3 rounded-xl bg-surface border border-border text-sm text-foreground focus:outline-none focus:border-[#00D4FF]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                      Portal Access
-                    </label>
-                    <div className="text-xs text-muted-foreground px-4 py-3 rounded-xl bg-surface border border-border">
-                      Secure Google sign-in — no password needed.
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-foreground truncate">
+                      {clientName || 'Signed in'}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {clientEmail}
                     </div>
                   </div>
+                  <Lock className="w-4 h-4 text-[#3DDC97] shrink-0 ml-auto" />
                 </div>
 
-                <div className="flex items-start gap-2.5 text-xs text-muted-foreground pt-4">
+                <div className="flex items-start gap-2.5 text-xs text-muted-foreground pt-2">
                   <input
                     id="intake-consent"
                     type="checkbox"
@@ -1561,20 +1468,20 @@ export const StartProjectWizard: React.FC<StartProjectWizardProps> = ({
                 <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="text-xs text-muted-foreground flex items-center gap-1.5">
                     <Lock className="w-3.5 h-3.5 text-[#3DDC97]" />
-                    <span>Instant dedicated portal setup · Zero spam</span>
+                    <span>Submits to our studio · reviewed within 24 hours</span>
                   </div>
 
                   <button
                     id="submit-project-intake-btn"
                     type="submit"
-                    disabled={isSubmitting || !accountInfo.name || !accountInfo.email}
+                    disabled={isSubmitting || !clientEmail}
                     className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-[#FF6B4A] hover:bg-[#ff5a34] text-white font-semibold text-sm shadow-xl shadow-[#FF6B4A]/30 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-40"
                   >
                     {isSubmitting ? (
-                      <span>Initializing Portal...</span>
+                      <span>Submitting…</span>
                     ) : (
                       <>
-                        <span>Submit Project & Open Portal</span>
+                        <span>Submit Project Brief</span>
                         <ArrowRight className="w-4 h-4" />
                       </>
                     )}
