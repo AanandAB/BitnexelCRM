@@ -21,6 +21,7 @@ export interface Env {
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   SITE_ORIGIN: string;
+  PORTAL_SYNC_TOKEN: string;
 }
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -326,6 +327,66 @@ export default {
       }
 
       return json({ email: session.email, name: session.name, projects: result }, 200, cors);
+    }
+
+    // ── Portal sync (CRM → D1) ─────────────────────────────────────────────
+    if (path === '/api/portal/sync' && request.method === 'POST') {
+      const auth = request.headers.get('Authorization') || '';
+      if (auth !== `Bearer ${env.PORTAL_SYNC_TOKEN}`) {
+        return json({ error: 'Unauthorized' }, 401, cors);
+      }
+      let payload: { clients?: any[]; projects?: any[]; milestones?: any[] };
+      try {
+        payload = await request.json();
+      } catch {
+        return json({ error: 'Invalid JSON' }, 400, cors);
+      }
+
+      const now = new Date().toISOString();
+      let clients = 0;
+      let projects = 0;
+      let milestones = 0;
+
+      for (const c of payload.clients ?? []) {
+        const id = String(c?.id ?? '').trim();
+        const email = String(c?.email ?? '').trim().toLowerCase();
+        if (!id || !email) continue;
+        await env.DB.prepare(
+          'INSERT OR REPLACE INTO clients (id, email, name, company, created_at) VALUES (?, ?, ?, ?, ?)'
+        ).bind(id, email, String(c?.name ?? ''), String(c?.company ?? ''), String(c?.created_at ?? now)).run();
+        clients++;
+      }
+
+      for (const p of payload.projects ?? []) {
+        const id = String(p?.id ?? '').trim();
+        const clientEmail = String(p?.client_email ?? '').trim().toLowerCase();
+        if (!id || !clientEmail) continue;
+        await env.DB.prepare(
+          'INSERT OR REPLACE INTO projects (id, client_email, name, category, status, stage, summary, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        ).bind(
+          id,
+          clientEmail,
+          String(p?.name ?? ''),
+          String(p?.category ?? ''),
+          String(p?.status ?? ''),
+          String(p?.stage ?? ''),
+          String(p?.summary ?? ''),
+          String(p?.created_at ?? now)
+        ).run();
+        projects++;
+      }
+
+      for (const m of payload.milestones ?? []) {
+        const id = String(m?.id ?? '').trim();
+        const projectId = String(m?.project_id ?? '').trim();
+        if (!id || !projectId) continue;
+        await env.DB.prepare(
+          'INSERT OR REPLACE INTO milestones (id, project_id, name, status, due_date) VALUES (?, ?, ?, ?, ?)'
+        ).bind(id, projectId, String(m?.name ?? ''), String(m?.status ?? ''), m?.due_date ? String(m.due_date) : null).run();
+        milestones++;
+      }
+
+      return json({ ok: true, clients, projects, milestones }, 200, cors);
     }
 
     return json({ error: 'Not found' }, 404, cors);
