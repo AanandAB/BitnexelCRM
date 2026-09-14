@@ -1,6 +1,0 @@
-{
-  "name": "Bitnexel",
-  "description": "High-performance software and systems studio. We engineer sub-50ms web applications, digital flagships, and custom software systems.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
